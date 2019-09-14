@@ -1035,10 +1035,6 @@ def loadKinopoiskContent(baseURL, requestMethod, CLIENTID=KINOPOISK_CLIENTID, AP
 	headers["device"] = "android"
 	headers["X-TIMESTAMP"] = timestamp
 	headers["X-SIGNATURE"] = hashlib.md5(hashString.encode('utf-8')).hexdigest()
-	
-	print (baseURL + requestMethod)
-	print ('\n')
-	print (headers)
 
 	return loadURLContent(baseURL + requestMethod, headers=headers, attempts=attempts, useProxy=useProxy)
 
