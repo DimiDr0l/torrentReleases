@@ -135,7 +135,7 @@ def rutorResultsForDays(days):
 			if (i >= count):
 				needMore = False
 			if needMore:
-				print("2222Загрузка списка предварительно подходящих раздач...")
+				print("агрузка списка предварительно подходящих раздач...")
 				try:
 					content = loadRutorContent(RUTOR_SEARCH_MAIN.format(i, group, ""), useProxy=False)
 				except:
