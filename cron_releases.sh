@@ -1,12 +1,12 @@
 #!/bin/sh
 
 for i in $(seq 1 5); do
-  /opt/bin/python3 /opt/etc/movies/digitalreleases2.py > /opt/etc/movies/log.txt
+  docker run --rm -v $PWD:/opt/app/www digitalreleases:latest
   ret=$?
   if [ $ret -eq 0 ]; then
-    logger -t "digitalreleases.py" "Загрузка завершена успешно."
+    logger -t "digitalreleases" "Загрузка завершена успешно."
     break
   else
-    logger -t "digitalreleases.py" "Ошибка загрузки."
+    logger -t "digitalreleases" "Ошибка загрузки."
   fi
 done

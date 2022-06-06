@@ -18,57 +18,57 @@ import urllib.parse
 import http.cookiejar
 import sys
 
-LOAD_DAYS = 60
-USE_MAGNET = True
-SORT_TYPE = "torrentsDate" #rating #torrentsDate
+LOAD_DAYS = int(os.environ.get('LOAD_DAYS', 60))
+USE_MAGNET = os.environ.get('USE_MAGNET', 'true')
+SORT_TYPE = os.environ.get('SORT_TYPE', 'torrentsDate') #rating #torrentsDate
 MIN_VOTES_KP = 500
 MIN_VOTES_IMDB = 1500
-HTML_SAVE_PATH = "/var/www/releases/index.html"
+HTML_SAVE_PATH = os.environ.get('HTML_SAVE_PATH', './www/index.html')
 
-SOCKS5_IP = ""
-SOCKS5_PORT = 9050
+SOCKS5_IP =  os.environ.get('SOCKS5_IP', '')
+SOCKS5_PORT = int(os.environ.get('SOCKS5_PORT', 9050))
 if SOCKS5_IP:
 	import socks
 	from sockshandler import SocksiPyHandler
 
 CONNECTION_ATTEMPTS = 3
 
-RUTOR_BASE_URL = "https://rutor.info"
-#RUTOR_BASE_URL = "https://www.rutorc6mqdinc4cz.onion"
+RUTOR_BASE_URL = "http://rutor.is"
+#RUTOR_BASE_URL = "http://www.rutorc6mqdinc4cz.onion"
 RUTOR_MONTHS = {"Янв": 1, "Фев": 2, "Мар": 3, "Апр": 4, "Май": 5, "Июн": 6, "Июл": 7, "Авг": 8, "Сен": 9, "Окт": 10, "Ноя": 11, "Дек": 12}
-RUTOR_SEARCH_MAIN = "https://rutor.info/search/{}/{}/300/0/BDRemux|BDRip|(WEB%20DL)%201080p|2160p|1080%D1%80%7C2160%D1%80%7C1080i%20{}"
-#RUTOR_SEARCH_MAIN = "https://www.rutorc6mqdinc4cz.onion/search/{}/{}/300/0/BDRemux|BDRip|(WEB%20DL)%201080p|2160p|1080%D1%80%7C2160%D1%80%7C1080i%20{}"
+RUTOR_SEARCH_MAIN = RUTOR_BASE_URL + "/search/{}/{}/300/0/BDRemux|BDRip|(WEB%20DL)%201080p|2160p|1080%D1%80%7C2160%D1%80%7C1080i%20{}"
+#RUTOR_SEARCH_MAIN = "http://www.rutorc6mqdinc4cz.onion/search/{}/{}/300/0/BDRemux|BDRip|(WEB%20DL)%201080p|2160p|1080%D1%80%7C2160%D1%80%7C1080i%20{}"
 
-KINOPOISK_API_IOS_BASE_URL = "https://ma.kinopoisk.ru/ios/5.0.0/"
-KINOPOISK_API_V1_BASE_URL = "https://ma.kinopoisk.ru"
+KINOPOISK_API_IOS_BASE_URL = "http://ma.kinopoisk.ru/ios/5.0.0/"
+KINOPOISK_API_V1_BASE_URL = "http://ma.kinopoisk.ru"
 KINOPOISK_API_IOS_FILMDETAIL = "getKPFilmDetailView?still_limit=14&filmID={}&sr=1&uuid={}"
 KINOPOISK_API_SALT = "IDATevHDS7"
 KINOPOISK_CLIENTID = binascii.b2a_hex(os.urandom(12)).decode('ascii')
 KINOPOISK_UUID = binascii.b2a_hex(os.urandom(16)).decode('ascii')
-KINOPOISK_POSTER_URL = "https://st.kp.yandex.net/images/{}{}width=360"
+KINOPOISK_POSTER_URL = "http://st.kp.yandex.net/images/{}{}width=360"
 
-KINOZAL_SEARCH_BDREMUX = "https://kinozal.tv/browse.php?s=%5E{}&g=3&c=0&v=4&d=0&w=0&t=0&f=0"
-KINOZAL_SEARCH_BDRIP = "https://kinozal.tv/browse.php?s=%5E{}&g=3&c=0&v=3&d=0&w=0&t=0&f=0"
-KINOZAL_USERNAME = ""
-KINOZAL_PASSWORD = ""
+KINOZAL_SEARCH_BDREMUX = "http://kinozal.tv/browse.php?s=%5E{}&g=3&c=0&v=4&d=0&w=0&t=0&f=0"
+KINOZAL_SEARCH_BDRIP = "http://kinozal.tv/browse.php?s=%5E{}&g=3&c=0&v=3&d=0&w=0&t=0&f=0"
+KINOZAL_USERNAME = os.environ.get('KINOZAL_USERNAME', "")
+KINOZAL_PASSWORD = os.environ.get('KINOZAL_PASSWORD', "")
 
 def main():
 	print("Дата и время запуска программы: " + str(datetime.datetime.now()) + ".")
 	print("Количество попыток при ошибках соединения: " + str(CONNECTION_ATTEMPTS) + ".")
 
 	if SOCKS5_IP:
-		print("Для rutor.info и kinozal.tv будет использоваться прокси-сервер SOCKS5: " + SOCKS5_IP + ":" + str(SOCKS5_PORT) + ".")
+		print("Для rutor.is и kinozal.tv будет использоваться прокси-сервер SOCKS5: " + SOCKS5_IP + ":" + str(SOCKS5_PORT) + ".")
 
-	print("Проверка доступности rutor.info...")
+	print("Проверка доступности rutor.is...")
 	try:
 		content = loadRutorContent(RUTOR_SEARCH_MAIN.format(0, 0, ""), useProxy=False)
 		count = rutorPagesCountForResults(content)
 	except:
-		print("Сайт rutor.info недоступен, или изменился его формат данных.")
+		print("Сайт rutor.is недоступен, или изменился его формат данных.")
 		print("Работа программы принудительно завершена.")
 		return 1
 	else:
-		print("Сайт rutor.info доступен.")
+		print("Сайт rutor.is доступен.")
 
 	print("Анализ раздач...")
 	results = rutorResultsForDays(LOAD_DAYS)
@@ -95,7 +95,7 @@ def rutorResultsForDays(days):
 			content = loadRutorContent(RUTOR_SEARCH_MAIN.format(0, group, ""), useProxy=False)
 			count = rutorPagesCountForResults(content)
 		except:
-			raise ConnectionError ("Ошибка. Не удалось загрузить страницу с результатами поиска или формат данных rutor.info изменился.")
+			raise ConnectionError ("Ошибка. Не удалось загрузить страницу с результатами поиска или формат данных rutor.is изменился.")
 
 		i = 0
 		needMore = True
@@ -135,12 +135,11 @@ def rutorResultsForDays(days):
 			if (i >= count):
 				needMore = False
 			if needMore:
-				print("агрузка списка предварительно подходящих раздач...")
+				print("Загрузка списка предварительно подходящих раздач...")
 				try:
 					content = loadRutorContent(RUTOR_SEARCH_MAIN.format(i, group, ""), useProxy=False)
 				except:
-					raise ConnectionError ("Ошибка. Не удалось загрузить страницу с результатами поиска или формат данных rutor.info изменился.")
-
+					raise ConnectionError ("Ошибка. Не удалось загрузить страницу с результатами поиска или формат данных rutor.is изменился.")
 	return tmpResults
 
 def convertRutorResults(rutorResults):
@@ -499,7 +498,7 @@ def kinopoiskRating(filmID, useProxy = False):
 	else:
 		opener = urllib.request.build_opener()
 
-	request = urllib.request.Request("https://rating.kinopoisk.ru/{}.xml".format(filmID), headers=headers)
+	request = urllib.request.Request("http://rating.kinopoisk.ru/{}.xml".format(filmID), headers=headers)
 	response = opener.open(request)
 	if response.info().get("Content-Encoding") == "gzip":
 		gzipFile = gzip.GzipFile(fileobj=response)
@@ -528,7 +527,6 @@ def filmDetail(filmID):
 	content = None
 
 	try:
-		print ("loadKinopoiskContent")
 		content = loadKinopoiskContent(KINOPOISK_API_IOS_BASE_URL, KINOPOISK_API_IOS_FILMDETAIL.format(filmID, KINOPOISK_UUID))
 	except:
 		pass
@@ -950,7 +948,7 @@ def rutorResultsOnPage(content):
 			mainElements = mainElement.find_all("a")
 			torrentFileLink = mainElements[0].get("href").strip()
 			if not torrentFileLink.startswith("http"):
-				torrentFileLink = urljoin("https://d.rutor.info", torrentFileLink)
+				torrentFileLink = urljoin("http://d.rutor.is", torrentFileLink)
 			magnetLink = mainElements[1].get("href").strip()
 
 			if not magnetLink.startswith("magnet"):
@@ -971,8 +969,9 @@ def rutorFilmIDForElements(elements, deep = True):
 	kID = None
 	for element in elements:
 		content = loadRutorContent(element["descriptionLink"], useProxy=False)
+		# print ('content', content)
 
-		patternLink = re.compile("\"https://www.kinopoisk.ru/film/(.*?)/\"")
+		patternLink = re.compile("\"http://www.kinopoisk.ru/film/(.*?)/\"")
 		matches = re.findall(patternLink, content)
 		if len(matches) == 1:
 			kID = matches[0]
@@ -981,7 +980,7 @@ def rutorFilmIDForElements(elements, deep = True):
 			return []
 
 		if not kID:
-			patternLink = re.compile("\"https://www.kinopoisk.ru/level/1/film/(.*?)/\"")
+			patternLink = re.compile("\"http://www.kinopoisk.ru/level/1/film/(.*?)/\"")
 			matches = re.findall(patternLink, content)
 			if len(matches) == 1:
 				kID = matches[0]
@@ -1018,7 +1017,6 @@ def rutorFilmIDForElements(elements, deep = True):
 	return elements
 
 def loadKinopoiskContent(baseURL, requestMethod, CLIENTID=KINOPOISK_CLIENTID, API_SALT=KINOPOISK_API_SALT, attempts=CONNECTION_ATTEMPTS, useProxy=False):
-	print ("loadKinopoiskContent")
 	timestamp = str(int(round(time.time() * 1000)))
 	hashString = requestMethod + timestamp + API_SALT
 
@@ -1060,7 +1058,7 @@ def kinozalAuth(username, password, useProxy = True):
 	values = {"username":username, "password":password}
 	data = urllib.parse.urlencode(values).encode()
 
-	request = urllib.request.Request("https://kinozal.tv/takelogin.php", data=data, headers=headers)
+	request = urllib.request.Request("http://kinozal.tv/takelogin.php", data=data, headers=headers)
 	try:
 		response = opener.open(request)
 	except:
@@ -1174,7 +1172,7 @@ def kinozalSearch(filmDetail, opener, type, licenseOnly = False):
 		if ("3D" in typePart) or ("TS" in typePart) or ("LINE" in typePart):
 			continue
 
-		request = urllib.request.Request("https://kinozal.tv/details.php?id={}".format(kinozalID), headers=headers)
+		request = urllib.request.Request("http://kinozal.tv/details.php?id={}".format(kinozalID), headers=headers)
 
 		try:
 			response = opener.open(request)
@@ -1191,7 +1189,7 @@ def kinozalSearch(filmDetail, opener, type, licenseOnly = False):
 		if len(matches) != 1:
 			continue
 
-		request = urllib.request.Request("https://kinozal.tv/get_srv_details.php?id={}&pagesd={}".format(kinozalID, matches[0]), headers=headers)
+		request = urllib.request.Request("http://kinozal.tv/get_srv_details.php?id={}&pagesd={}".format(kinozalID, matches[0]), headers=headers)
 		try:
 			response = opener.open(request)
 		except:
@@ -1236,7 +1234,7 @@ def kinozalSearch(filmDetail, opener, type, licenseOnly = False):
 		if DBResults[0]["seeders"] == 0:
 			#return None
 			DBResults.sort(key = operator.itemgetter("license", "torrentDate"), reverse = True)
-		request = urllib.request.Request("https://kinozal.tv/get_srv_details.php?id={}&action=2".format(DBResults[0]["kinozalID"]), headers=headers)
+		request = urllib.request.Request("http://kinozal.tv/get_srv_details.php?id={}&action=2".format(DBResults[0]["kinozalID"]), headers=headers)
 		try:
 			response = opener.open(request)
 		except:
@@ -1253,13 +1251,13 @@ def kinozalSearch(filmDetail, opener, type, licenseOnly = False):
 		if not match:
 			return None
 
-		return {"link": "https://dl.kinozal.tv/download.php?id={}".format(DBResults[0]["kinozalID"]), "magnet": "magnet:?xt=urn:btih:{}&dn=kinozal.tv".format(match[0]), "date": DBResults[0]["torrentDate"], "type": type, "license": DBResults[0]["license"]}
+		return {"link": "http://dl.kinozal.tv/download.php?id={}".format(DBResults[0]["kinozalID"]), "magnet": "magnet:?xt=urn:btih:{}&dn=kinozal.tv".format(match[0]), "date": DBResults[0]["torrentDate"], "type": type, "license": DBResults[0]["license"]}
 	elif len(PMResults) > 0:
 		PMResults.sort(key = operator.itemgetter("license", "seeders"), reverse = True)
 		if PMResults[0]["seeders"] == 0:
 			#return None
 			PMResults.sort(key = operator.itemgetter("license", "torrentDate"), reverse = True)
-		request = urllib.request.Request("https://kinozal.tv/get_srv_details.php?id={}&action=2".format(PMResults[0]["kinozalID"]), headers=headers)
+		request = urllib.request.Request("http://kinozal.tv/get_srv_details.php?id={}&action=2".format(PMResults[0]["kinozalID"]), headers=headers)
 		try:
 			response = opener.open(request)
 		except:
@@ -1276,13 +1274,13 @@ def kinozalSearch(filmDetail, opener, type, licenseOnly = False):
 		if not match:
 			return None
 
-		return {"link": "https://dl.kinozal.tv/download.php?id={}".format(PMResults[0]["kinozalID"]), "magnet": "magnet:?xt=urn:btih:{}&dn=kinozal.tv".format(match[0]), "date": PMResults[0]["torrentDate"], "type": type, "license": PMResults[0]["license"]}
+		return {"link": "http://dl.kinozal.tv/download.php?id={}".format(PMResults[0]["kinozalID"]), "magnet": "magnet:?xt=urn:btih:{}&dn=kinozal.tv".format(match[0]), "date": PMResults[0]["torrentDate"], "type": type, "license": PMResults[0]["license"]}
 	return None
 
 def saveHTML(movies, filePath, useMagnet=USE_MAGNET):
 	f = open(filePath,'w', encoding='utf-8')
-	html =  """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="https://www.w3.org/1999/xhtml" lang="ru-RU">
+	html =  """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru-RU">
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow, noarchive, noodp, noydir, nosnippet" />
@@ -1755,7 +1753,7 @@ function sortTorrentsDate(){
 		elif movie["premierType"] == "ru":
 			prHeader = "премьера в России"
 		descriptionBlock += descriptionTemplate.format(prHeader, movie["premierDate"].strftime("%d.%m.%Y"))
-		#descriptionBlock += descriptionTemplate.format("торрент-релиз", "<a href=\"{}\" style=\"text-decoration: underline; color:black\" target=\"_blank\">{}</a> ({})".format("https://rutor.is/search/0/0/010/0/film%20" + movie["filmID"], movie["torrentsDate"].strftime("%d.%m.%Y"), movie["torrentsDateType"]))
+		#descriptionBlock += descriptionTemplate.format("торрент-релиз", "<a href=\"{}\" style=\"text-decoration: underline; color:black\" target=\"_blank\">{}</a> ({})".format("http://rutor.is/search/0/0/010/0/film%20" + movie["filmID"], movie["torrentsDate"].strftime("%d.%m.%Y"), movie["torrentsDateType"]))
 		descriptionBlock += descriptionTemplate.format("торрент-релиз", "{}".format(movie["torrentsDate"].strftime("%d.%m.%Y")))
 		#descriptionBlock += descriptionTemplate.format("описание", movie["description"])
 		descriptionBlock += descriptionTemplate.format("тип торрент-релиза", movie["torrentsDateType"])
@@ -1788,9 +1786,9 @@ function sortTorrentsDate(){
 		rating = movie["rating"]
 		if movie["ratingFloat"] < 1:
 			ratingStyle = "display: none;"
-			rating = "—"
+			rating = "-"
 
-		html += movieTemplate.format(movie["torrentsDate"].strftime("%Y-%m-%d"), movie["torrentsDate"].strftime("%Y-%m-%d"), movie["rating"], movie["torrentsDate"].strftime("%Y-%m-%d"), movie["nameRU"], displayOrigName, movie["nameOriginal"], ratingStyle, rating, movie["posterURL"], movie["nameRU"], "https://www.kinopoisk.ru/film/{}/video/".format(movie["filmID"]), descriptionBlock, movie["description"], buttonsBlock)
+		html += movieTemplate.format(movie["torrentsDate"].strftime("%Y-%m-%d"), movie["torrentsDate"].strftime("%Y-%m-%d"), movie["rating"], movie["torrentsDate"].strftime("%Y-%m-%d"), movie["nameRU"], displayOrigName, movie["nameOriginal"], ratingStyle, rating, movie["posterURL"], movie["nameRU"], "http://www.kinopoisk.ru/film/{}/video/".format(movie["filmID"]), descriptionBlock, movie["description"], buttonsBlock)
 
 		#html += movieTemplate.format(movie["torrentsDate"].strftime("%Y-%m-%d"), movie["torrentsDate"].strftime("%Y-%m-%d"), movie["rating"], movie["torrentsDate"].strftime("%Y-%m-%d"), movie["nameRU"], displayOrigName, movie["nameOriginal"], ratingStyle, rating, movie["posterURL"], movie["nameRU"], movie["trailerURL"], descriptionBlock, movie["description"], buttonsBlock)
 	html += """    </div>
